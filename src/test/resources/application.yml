@@ -1,0 +1,26 @@
+spring:
+    data:
+        jpa:
+            show-sql: true
+            format-sql: true
+            open-in-view: true
+            repositories:
+                enabled: true
+        hibernate:
+            dialect: com.marvinformatics.hibernate.json.PostgreSQLJsonDialect
+            use-new-id-generator-mappings: true
+            ddl-auto: create-update
+
+    datasource:
+        type: com.zaxxer.hikari.HikariDataSource
+        url: jdbc:postgresql://localhost/dicom
+        driver-class-name: org.postgresql.Driver
+        username: dicom
+        password:
+        hikari:
+            idle-timeout: 10000
+            connection-test-query: SELECT 1
+            minimum-idle: 1
+            maximum-pool-size: 5
+            pool-name: dicom-walker
+            auto-commit: false

@@ -1,0 +1,136 @@
+/*
+ * dicom-walker: build
+ * XNAT http://www.xnat.org
+ * Copyright (c) 2005-2018, Washington University School of Medicine and Howard Hughes Medical Institute
+ * All Rights Reserved
+ *
+ *  Released under the Simplified BSD.
+ */
+
+buildscript {
+    ext {
+        vKotlin = "1.2.21"
+        vGroovy = "2.4.13"
+        vDcm4che = "5.12.0"
+        vDepMgmt = "1.0.4.RELEASE"
+        vGradleDocker = "0.17.2"
+        vSpringAwsLambda = "1.1.0"
+        vAwsLambdaCore = "1.1.0"
+        vSpring = "4.3.14.RELEASE"
+        vSpringData = "Ingalls-SR10"
+        vLombok = "1.16.20"
+        vSlf4j = "1.7.25"
+        vLog4j = "2.10.0"
+        vAssertJ = "3.9.0"
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2"
+        }
+        maven {
+            url "https://repo.spring.io/libs-release"
+        }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${vKotlin}"
+        classpath "io.spring.gradle:dependency-management-plugin:${vDepMgmt}"
+        classpath "gradle.plugin.com.palantir.gradle.docker:gradle-docker:${vGradleDocker}"
+    }
+}
+
+apply plugin: "com.palantir.docker-run"
+apply plugin: "groovy"
+apply plugin: "idea"
+apply plugin: "io.spring.dependency-management"
+apply plugin: "jacoco"
+apply plugin: "java"
+apply plugin: "org.jetbrains.kotlin.jvm"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven {
+        url "https://repo.spring.io/libs-release"
+    }
+    maven {
+        url "http://www.dcm4che.org/maven2"
+    }
+}
+
+group "org.nrg.xnat.lambdas"
+version "1.0-SNAPSHOT"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileKotlin {
+    kotlinOptions.jvmTarget = targetCompatibility
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.enabled = false
+        csv.destination file("${buildDir}/jacocoCsv")
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+dockerRun {
+    name "dicom-walker-test-db"
+    image "postgres"
+    ports "5432"
+    env "POSTGRES_USER": "dicom"
+}
+
+dockerRemoveContainer.mustRunAfter dockerStop
+
+test {
+    dependsOn tasks.dockerRun
+    finalizedBy tasks.dockerRemoveContainer, tasks.dockerStop
+}
+
+dependencyManagement.imports {
+    mavenBom "org.springframework.data:spring-data-releasetrain:${vSpringData}"
+}
+
+dependencies {
+    implementation "me.ccampo:spring-aws-lambda:${vSpringAwsLambda}"
+    implementation "com.amazonaws:aws-lambda-java-core:${vAwsLambdaCore}"
+
+    implementation "org.springframework.data:spring-data-jpa"
+    implementation "org.springframework.data:spring-data-rest-webmvc"
+    implementation "org.springframework:spring-aspects:${vSpring}"
+    implementation "org.springframework:spring-context-support:${vSpring}"
+
+    implementation "org.projectlombok:lombok:${vLombok}"
+
+    implementation "org.hibernate:hibernate-entitymanager:5.2.12.Final"
+    implementation "org.hibernate:hibernate-ehcache:5.2.12.Final"
+    implementation "org.hibernate:hibernate-envers:5.2.12.Final"
+    implementation "org.hibernate:hibernate-validator:6.0.7.Final"
+    implementation "org.hibernate.validator:hibernate-validator-annotation-processor:6.0.7.Final"
+    implementation "com.marvinformatics.hibernate:hibernate-native-json:0.4"
+    implementation "org.ehcache.modules:ehcache-core:3.4.0"
+    implementation "com.zaxxer:HikariCP:2.7.6"
+    implementation "org.postgresql:postgresql:42.2.1"
+    implementation "com.google.code.findbugs:jsr305:3.0.2"
+    implementation "org.apache.commons:commons-lang3:3.7"
+
+    implementation "org.apache.logging.log4j:log4j-api:${vLog4j}"
+    implementation "org.apache.logging.log4j:log4j-core:${vLog4j}"
+    implementation "org.apache.logging.log4j:log4j-slf4j-impl:${vLog4j}"
+    implementation "org.slf4j:jcl-over-slf4j:${vSlf4j}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.3"
+
+    implementation "javax.servlet:jstl:1.2"
+
+    testImplementation "junit:junit:4.12"
+    testImplementation "org.springframework:spring-test:${vSpring}"
+    testImplementation "org.assertj:assertj-core:${vAssertJ}"
+}

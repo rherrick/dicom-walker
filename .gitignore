@@ -1,0 +1,5 @@
+.gradle/*
+build/*
+dep*.txt
+out/*
+*.log

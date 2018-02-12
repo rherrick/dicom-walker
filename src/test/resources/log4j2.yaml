@@ -1,0 +1,35 @@
+Configuration:
+  name: Default
+
+  Properties:
+    Property:
+      name: log-path
+      value: "build/test"
+
+  Appenders:
+
+    Console:
+      name: STDOUT
+      target: SYSTEM_OUT
+      PatternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+
+    File:
+      name: AppLog
+      fileName: ${log-path}/dicom-walker.log
+      PatternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+
+  Loggers:
+
+      Root:
+        level: debug
+        AppenderRef:
+          - ref: STDOUT
+
+      Logger:
+        - name: org.nrg.xnat.lambdas.dicom
+          level: debug
+          AppenderRef:
+            - ref: AppLog
+              level: debug
